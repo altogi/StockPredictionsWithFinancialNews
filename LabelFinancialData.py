@@ -69,7 +69,7 @@ class FinancialDataLabeler:
         if self.method == 'single':
             self.market_data.loc[:, 'price_base'] = self.market_data['open_base'].copy()
         elif self.method == 'MA':
-            self.cols_base = ['close_+' + str(d) for d in self.d_base] + ['open_base']
+            self.cols_base = ['close_+' + str(d) for d in self.d_base] + #['open_base']
             self.market_data.loc[:, 'price_base'] = self.market_data[self.cols_base].mean(axis=1)
         self.market_data.loc[:, 'price_compare'] = self.market_data[self.cols_compare].mean(axis=1)
 
