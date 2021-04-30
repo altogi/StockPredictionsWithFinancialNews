@@ -8,6 +8,7 @@ from ImportFinancialData import FinancialDataImporter
 from LabelFinancialData import FinancialDataLabeler
 from ClassifyFinancialNews import FinancialNewsClassifier
 from SimulatePortfolio import PortfolioSimulator
+
 pd.options.mode.chained_assignment = None
 
 
@@ -139,10 +140,26 @@ class FinancialNewsPredictor:
             self.directory_labeled + '/model=' + model + ',max_len=' + str(max_len) + ',val_size=' + \
             str(validation_size) + ',batch=' + str(batch_size) + ',split_type=' + split_type + ',epochs=' + str(epochs)
 
-        # Before training, see if the files to generate already exist
         if Path(self.directory_model + '/predictions.csv').is_file():
+            # Recover trained model and predictions
             self.predictions = pd.read_csv(self.directory_model + '/predictions.csv', sep='|')
             self.model = ktrain.load_predictor(self.directory_model + '/predictor')
+
+        elif Path(self.directory_model + '/predictor').is_file() and Path(
+                self.directory_model + '/preprocessing.pkl').is_file():
+            # Already trained model but still need predictions
+            with open(self.directory_model + '/preprocessing.pkl', 'rb') as f_pickle:
+                _, _, preprocessing = pickle.load(f_pickle)
+
+            self.classifier_trainer = FinancialNewsClassifier(self.data, model=model, max_len=max_len,
+                                                              validation_size=validation_size, batch_size=batch_size,
+                                                              split_type=split_type)
+            predictor = ktrain.load_predictor(self.directory_model + '/predictor')
+            self.classifier_trainer.get_predictor(self.directory_model, predictor=predictor)
+            self.model = self.classifier_trainer.predictor
+            self.predictions = self.classifier_trainer.predictions
+            self.predictions.to_csv(self.directory_model + '/predictions.csv', sep='|')
+
         else:
             Path(self.directory_model).mkdir(parents=True, exist_ok=True)
             self.classifier_trainer = FinancialNewsClassifier(self.data, model=model, max_len=max_len,
@@ -214,7 +231,6 @@ class FinancialNewsPredictor:
         self.simulated_portfolio = self.simulator.portfolio
         self.simulated_portfolio.to_csv(self.directory_model + '/portfolio.csv')
         self.simulator.visualize()
-
 
 # df = pd.read_csv('us_equities_news_ultra_short.csv', sep='|', parse_dates=['release_date'])
 # f = FinancialNewsPredictor(df)

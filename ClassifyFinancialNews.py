@@ -112,10 +112,13 @@ class FinancialNewsClassifier:
         self.learner.plot()
         self.learner.validate(print_report=False, save_path=directory)
 
-    def get_predictor(self, directory):
+    def get_predictor(self, directory, predictor=None):
         """This method obtains the predictor from the trained model, saves it, and uses it to carry out a new set of
         predictions."""
-        self.predictor = ktrain.get_predictor(self.learner.model, self.preprocessing)
-        self.predictor.save(directory + '/predictor')
+        if predictor is None:
+            self.predictor = ktrain.get_predictor(self.learner.model, self.preprocessing)
+            self.predictor.save(directory + '/predictor')
+        else:
+            self.predictor = predictor
         self.predictions = self.data[['id', 'content', 'buy', 'sell', 'do_nothing', 'is_validation']].copy()
         self.predictions['prediction'] = self.predictor.predict(self.predictions['content'].tolist())
