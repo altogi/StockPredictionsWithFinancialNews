@@ -190,16 +190,40 @@ The input parameters that this step receives greatly influence how the text clas
 * `batch_size`: This int determines how many documents are bundled together at each iteration of training.
 * `split_type`: Specifies how to split the data into training and validation sets. `split_type='random'` simply
 randomly splits the input dataset according to the specified `validation_size`, ensuring an homogeneous distribution of each class. `split_type='time_series'` ensures that only the latest entries of the dataset are taken as a validation set. By default it is 'random'.
+
 For a discussion regarding the constraints of your sytem's RAM on the possible combinations of `max_len` and `batch_size` when `model = 'bert'`, [click here](https://github.com/google-research/bert#out-of-memory-issues).
 
-With regards to the preprocessing of the dataset, the method `text.texts_from_df()` from ktrain is used, and it is made sure that if previous preprocessings have been carried out for the same model and combination of parameters, it can be reloaded instead of recomputed. Similarly, in the case in which the model has already been trained and its corresponding predictor has been stored, it is loaded alongside its predictions (if already computed), and thus the definition of a ktrain model and learner for further training is avoided.
+With regards to the preprocessing of the dataset, the method `text.texts_from_df()` from ktrain is used, and it is made sure that if previous preprocessings have been carried out for the same model and combination of parameters, it can be reloaded instead of recomputed. The preprocessing files will be stored in a folder specific to the current combination of `model`, `max_len`, `validation_size`, `batch_size`, and `split_type`. Similarly, in the case in which the model has already been trained and its corresponding predictor has been stored, it is loaded alongside its predictions (if already computed), and thus the definition of a ktrain model and learner for further training is avoided.
 
-In case the training of a new model is necessary, after defining the required ktrain learner and model, this method goes on to aid the user in specifying a learning rate. At this point, the user has two options: to manually enter a float representing the learning rate, or to allow the application to iterate throughout several values of this parameter to obtain the loss-learning rate curve. Based on this curve, the user is expected to estimate an adequate value for this parameter.
+In case the training of a new model is necessary, after defining the required ktrain learner and model, this method goes on to aid the user in specifying a learning rate. At this point, the user has the option of allowing the application to iterate throughout several values of this parameter to obtain the loss-learning rate curve. Based on this curve, the user is expected to estimate an adequate value for this parameter. [Generally, the maximum learning rate associated with a decreasing loss with increasing learning rate is most adequate.](https://arxiv.org/pdf/1506.01186.pdf)
 
 Following the previous series of examples, to define a text classifier based on BERT, with a maximum sequence length of 256 and a batch size of 16, one would run the following line of code:
 ```
 f.create_classifier(model='bert', max_len=256, batch_size=16)
 ```
+
+### 6. Training and Predicting
+
+Once an appropriate learning rate has been determined, the learner can be trained with method `train_classifier()` of `FinancialNewsPredictor`. Here, the user has to specify the maximum number of epochs `epochs` to train as well as the number of epochs `early_stopping` after which to stop if no improvement in the validation loss has occurred. Before training, the user will be prompted to input the desired learning rate.
+
+Training is carried out with ktrain's `autofit()` method, which implements a triangular learning rate policy. In other words, every epoch is divided into two halves: in the first half, the learning rate increases linearly from a base rate to the learning rate specified by the user, whereas in the second half it decreases linearly from such maximum to a near-zero rate. This training scheme was chosen since [it is well suited for Keras built-in training callbacks, such as `EarlyStopping`.](https://towardsdatascience.com/ktrain-a-lightweight-wrapper-for-keras-to-help-train-neural-networks-82851ba889c?gi=ea843ab1ae3c). This learning rate policy was proposed by Leslie Smith of the Naval Research Laboratory, and her work can be found [here](https://arxiv.org/pdf/1506.01186.pdf).
+
+Once the application stops training, (either because of a converged model or because of an insufficient numer of epochs), the training curve of the training is presented, and a confusion matrix is stored in *confusion_matrix.csv*, in the same folder as the preprocessing files.
+
+For instance, to train during 6 epochs with a patience of 2 epochs, run the following line of code:
+
+```
+f.train_classifier(epochs=6, early_stopping=2)
+```
+
+Once the model has been trained, predicting simply involves applying the model to the whole labeled dataset. As a result, the dataset of financial news will be labeled not only according to the price criteria specified earlier on, but also by the model's predictions. This resulting dataset includes a column 'is_validation' that indicates whether each news article was used for training the model or not. These predictions are stored in a table *predictions.csv* under the same folder as all model files. The ktrain predictor resulting from training is also stored under the same directory, in a folder *predictor*. To predict, simply run the following:
+
+```
+f.predict_with_classifier()
+```
+
+### 7. Simulating a Model-Managed Portfolio
+
 
 
 Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
