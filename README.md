@@ -186,10 +186,20 @@ Before a text classifier model can be trained, method `create_classifier()` of `
 The input parameters that this step receives greatly influence how the text classifier model is trained. These are:
 * `model`: This string indicates what model should the text classifier be based on. According to ktrain's source code, the available models are: 'fasttext' for a FastText model, 'nbsvm' for a NBSVM model, 'logreg' for logistic regression using embedding layers, 'bigru' for Bidirectional GRU with pretrained word vectors, 'bert' for BERT Text Classification and 'distilbert' for Hugging Face's DistilBert model.
 * `max_len`: This int indicates the maximum number of words that can be taken into account per document when training the model.
-* `validation_size`: This float sets the size of the validation set used to evaluate the model. 
+* `validation_size`: This float sets the size of the validation set used to evaluate the model. By default it is 0.2.
 * `batch_size`: This int determines how many documents are bundled together at each iteration of training.
+* `split_type`: Specifies how to split the data into training and validation sets. `split_type='random'` simply
+randomly splits the input dataset according to the specified `validation_size`, ensuring an homogeneous distribution of each class. `split_type='time_series'` ensures that only the latest entries of the dataset are taken as a validation set. By default it is 'random'.
+For a discussion regarding the constraints of your sytem's RAM on the possible combinations of `max_len` and `batch_size` when `model = 'bert'`, [click here](https://github.com/google-research/bert#out-of-memory-issues).
 
+With regards to the preprocessing of the dataset, the method `text.texts_from_df()` from ktrain is used, and it is made sure that if previous preprocessings have been carried out for the same model and combination of parameters, it can be reloaded instead of recomputed. Similarly, in the case in which the model has already been trained and its corresponding predictor has been stored, it is loaded alongside its predictions (if already computed), and thus the definition of a ktrain model and learner for further training is avoided.
 
+In case the training of a new model is necessary, after defining the required ktrain learner and model, this method goes on to aid the user in specifying a learning rate. At this point, the user has two options: to manually enter a float representing the learning rate, or to allow the application to iterate throughout several values of this parameter to obtain the loss-learning rate curve. Based on this curve, the user is expected to estimate an adequate value for this parameter.
+
+Following the previous series of examples, to define a text classifier based on BERT, with a maximum sequence length of 256 and a batch size of 16, one would run the following line of code:
+```
+f.create_classifier(model='bert', max_len=256, batch_size=16)
+```
 
 
 Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
