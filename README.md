@@ -48,7 +48,17 @@
         <li><a href="#installation">Installation</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Usage</a></li>
+    <li><a href="#usage">Usage</a>
+      <ul>
+        <li><a href="#dataset">1. Selecting a Dataset</a></li>
+        <li><a href="#installation">Installation</a></li>
+        <li><a href="#installation">Installation</a></li>
+        <li><a href="#installation">Installation</a></li>
+        <li><a href="#installation">Installation</a></li>
+        <li><a href="#installation">Installation</a></li>
+        <li><a href="#installation">Installation</a></li>
+      </ul>
+    </li>
     <li><a href="#roadmap">Roadmap</a></li>
     <li><a href="#contributing">Contributing</a></li>
     <li><a href="#license">License</a></li>
@@ -224,75 +234,41 @@ f.predict_with_classifier()
 
 ### 7. Simulating a Model-Managed Portfolio
 
+To validate the obtained predictions, it makes sense to simulate the real-life performance of a portfolio that is exclusively managed by the model's predictions. Since in the end the accuracy of the model is also significantly dependent on the price criteria applied to label the dataset, simulating the resulting portfolio is a way to validate both the trained model and the price criteria themselves at the same time. To this end, a method `simulate_portfolio` of `FinancialNewsPredictor` can be used.
+
+The simulation starts with a portfolio made out of an equal number of a specified set of stocks, as well as a specified amount of cash. For any point in the simulation, the portfolio's value is the sum of the market value of every stock in the portfolio and the current amount of cash owned. Financial news and their predictions are processed in the ascending order of their release dates. In this way, for each of the predictions related to the stocks in the simulated portfolio, three actions are possible:
+* If the prediction is "buy", the quantity of the stock mentioned in the news is increased, and the cash amount is reduced according to the stock's market price.
+* If the prediction is "sell", the quantity of the stock mentioned in the news is decreased, and the cash amount is increased according to the stock's market price.
+* If the prediction is "do_nothing", nothing is changed.
+
+In case the quantity of a particular stock in the portfolio is zero, no sale will take place until the quantity is increased. In case the portfolio's cash amount is zero, no stocks will be bought until this amount is increased. This dynamic goes on until the last of the model's predictions has been processed. Once the simulation is finalized, the portfolio return is compared with the starting portfolio left untouched and a benchmark index (S&P 500). Moreover, a table *portfolio.csv* with the portfolio's evolution during the simulation is stored in a folder specific to the parameters of the simulation.
+
+Based on this simulation dynamic, the method's input arguments are the following:
+* `selection`: This list of strings allows the user to select only a set of tickers to simulate their performance. If None, all companies are taken into account.
+* `starting_amount`: int, Indicates the number of stocks of each company that the simulation begins with.
+* `starting_cash`: float, Indicates the starting cash amount of the simulation.
+* `transaction_amount`: int, Indicates how many stocks are involved in each transaction.
+* `price`: string, Indicates what stock price should be taken for a daily reference. To choose between 'Close', 'Open', and 'Adj Close'.
+* `only_validation`: boolean, If True, the simulation will only be done with financial news belonging to the validation set of the model obtained from `FinancialNewsClassifier`.
+* `start_date`: str representing a date, in the form YYYY-mm-dd, at which to start the simulation.
+* `end_date`: str representing a date, in the form YYYY-mm-dd, at which to end the simulation.
+
+For example, in order to simulate a portfolio made up of Apple, Microsoft, Amazon, and Tesla stocks, ranging from 2015 to 2020, starting with 1000 stocks of each, one has simply to run:
+
+```
+f.simulate_portfolio(starting_amount=1000, 
+                     start_date='2015-01-01', 
+                     end_date='2020-01-01', 
+                     selection=['AAPL', 'MSFT', 'AMZN', 'TSLA']
+                     )
+```
 
 
-Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
-
-_For more examples, please refer to the [Documentation](https://example.com)_
-
-
-
-
-
-<!-- CONTRIBUTING -->
-## Contributing
-
-Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-
-
-<!-- LICENSE -->
-## License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
-
-
-<!-- CONTACT -->
-## Contact
-
-Your Name - [@your_twitter](https://twitter.com/your_username) - email@example.com
-
-Project Link: [https://github.com/your_username/repo_name](https://github.com/your_username/repo_name)
-
-
-
-<!-- ACKNOWLEDGEMENTS -->
-## Acknowledgements
-* [GitHub Emoji Cheat Sheet](https://www.webpagefx.com/tools/emoji-cheat-sheet)
-* [Img Shields](https://shields.io)
-* [Choose an Open Source License](https://choosealicense.com)
-* [GitHub Pages](https://pages.github.com)
-* [Animate.css](https://daneden.github.io/animate.css)
-* [Loaders.css](https://connoratherton.com/loaders)
-* [Slick Carousel](https://kenwheeler.github.io/slick)
-* [Smooth Scroll](https://github.com/cferdinandi/smooth-scroll)
-* [Sticky Kit](http://leafo.net/sticky-kit)
-* [JVectorMap](http://jvectormap.com)
-* [Font Awesome](https://fontawesome.com)
-
-
-
+## Project Structure
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/othneildrew/Best-README-Template.svg?style=for-the-badge
-[contributors-url]: https://github.com/othneildrew/Best-README-Template/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/othneildrew/Best-README-Template.svg?style=for-the-badge
-[forks-url]: https://github.com/othneildrew/Best-README-Template/network/members
-[stars-shield]: https://img.shields.io/github/stars/othneildrew/Best-README-Template.svg?style=for-the-badge
-[stars-url]: https://github.com/othneildrew/Best-README-Template/stargazers
-[issues-shield]: https://img.shields.io/github/issues/othneildrew/Best-README-Template.svg?style=for-the-badge
-[issues-url]: https://github.com/othneildrew/Best-README-Template/issues
-[license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=for-the-badge
 [license-url]: https://github.com/othneildrew/Best-README-Template/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://www.linkedin.com/in/altogi/
-[product-screenshot]: images/screenshot.png
