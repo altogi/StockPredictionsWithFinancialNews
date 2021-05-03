@@ -63,11 +63,11 @@
 ## About The Project
 
 In the stock market, information is money. Receiving the information first gives one a significant advantage over other traders.
-Thus, it makes sense that financial news have a great influence on the market.
+Thus, it makes sense that financial news have a great influence over the market.
 
-Given the recent rise in the availability of data, and the apparition of revolutionary NLP techniques, it has been attempted in many occasions to predict market trends based on financial news. The majority of the existing solutions rely on sentiment analysis, assuming that a positive document sentiment is directly related to increases in a security's price, and viceversa. Sentiment is either extracted using a predefined dictionary of tagged words, or by applying deep learning techniques that rely on a large datasets of labeled news. An advanced example of rule-based sentiment analysis is VADER, a model that is sensitive not only to polarity, but also to a document's intensity.
+Given the recent rise in the availability of data, and the apparition of revolutionary NLP techniques, it has been attempted in many occasions to predict market trends based on financial news. The majority of the existing solutions rely on sentiment analysis, assuming that a positive document sentiment is directly related to increases in a security's price, and viceversa. Sentiment is either extracted using a predefined dictionary of tagged words, or by applying deep learning techniques that rely on a large datasets of labeled news. An advanced example of rule-based sentiment analysis is [VADER](https://blog.quantinsti.com/vader-sentiment/), a model that is sensitive not only to polarity, but also to a document's intensity.
 
-With the recent dawn of the Transformer, it is now possible to extract the sentiment from a document in a much quicker non-sequential procedure, and with the usage of pre-trained models such as BERT, applying these models to a desired use case has never been simpler. An example of this is FinBERT, a text classifier predicting sentiment with a fine-tuned version of BERT.
+With the recent dawn of the Transformer, it is now possible to extract the sentiment from a document in a much quicker non-sequential procedure, and with the usage of pre-trained models such as BERT, applying these models to a desired use case has never been simpler. An example of this is [FinBERT](https://arxiv.org/abs/1908.10063), a text classifier predicting sentiment with a fine-tuned version of BERT.
 
 Nevertheless, sentiment can act as an intermediate factor between the news, and the stock's price. As a result, developing a text classifier to predict sentiment is not as efficient as directly predicting price evolutions, when the objective is to develop a profitable trading strategy.
 
@@ -108,7 +108,7 @@ These are some things that you will need before locally setting up this applicat
 
 <!-- USAGE EXAMPLES -->
 ## Usage
-### Selecting a Dataset
+### 1. Selecting a Dataset
 To use this application, a dataset of financial news is needed. This is the dataset on which the text classification model will be trained, and later on validated. This dataset has to have the following features:
 * An identification column **id**, representing every news article.
 * A column **content** containing the article's text.
@@ -117,13 +117,13 @@ To use this application, a dataset of financial news is needed. This is the data
 
 A great dataset to use for this application is *us_equities_news_dataset.csv* from Kaggle's [Historical financial news archive](https://www.kaggle.com/gennadiyr/us-equities-news-data). This dataset is a news archive of more than 800 american companies for the last 12 years, and has been used in every step of the development of this project.
 
-### Creating a *FinancialNewsPredictor* Object
+### 2. Creating a `FinancialNewsPredictor` Object
 This object will carry out all of the steps of the application, and thus its correct definition is very important. Besides taking the aforementioned dataset as input, these three parameters are required to ensure the execution goes as desired:
-1. *base_directory:* This is the root directory in which all of the files generated during the application's execution will be stored. By default, this is set to be the directory in which the application is located.
-2. *selection:* To tailor the model to a reduced number of companies, it is possible to apply a selection of tickers instead of all of the companies included in the financial news dataset. As a list of strings, one can specify a number of tickers, a number of sectors, or a number of industries, in order to filter the dataset according to such selection.
-3. *selection_mode:* To specify the selection mode, one must enter either 'ticker', 'industry', or 'sector' for this parameter, thus letting the application know what the selection stands for.
+1. `base_directory`: This is the root directory in which all of the files generated during the application's execution will be stored. By default, this is set to be the directory in which the application is located.
+2. `selection`: To tailor the model to a reduced number of companies, it is possible to apply a selection of tickers instead of all of the companies included in the financial news dataset. As a list of strings, one can specify a number of tickers, a number of sectors, or a number of industries, in order to filter the dataset according to such selection.
+3. `selection_mode`: To specify the selection mode, one must enter either 'ticker', 'industry', or 'sector' for this parameter, thus letting the application know what the selection stands for.
 
-The code snippet below shows how one would create a *FinancialNewsPredictor* object focusing on companies from the technology or financial services sectors.
+The code snippet below shows how one would create a `FinancialNewsPredictor` object focusing on companies from the technology or financial services sectors.
 
 ```
 f = FinancialNewsPredictor(df_news, 
@@ -132,7 +132,52 @@ f = FinancialNewsPredictor(df_news,
                          selection_mode='sector')
 ```
 
-### Importing Financial Data
+### 3. Importing Financial Data
+
+Now it is necessary to define an instance of class `FinancialDataImporter` through a method `import_financial_data()` of `FinancialNewsPredictor`, in order to import price data based on the dates and stock tickers associated to each news article. To do so, this class simply uses the Yahoo Finance API. 
+
+The only parameter for method `import_financial_data()` is `deltas`. This list of integers specifies what market days after each new's release date are considered relevant. The closing market price of each of these relevant dates is extracted for further analysis in the application.
+
+This method also makes sure to store the resulting market data in a table *market_data.csv*, which itself is also in a folder whose name is determined by the selected `deltas`. 
+
+For example, with `deltas = [1, 2]`, one would execute the following line of code:
+
+```
+f.import_financial_data(deltas)
+```
+
+And taking into account the `base_directory` specified earlier, there would be a table *market_data.csv* in *./BERTforMarketPredictions/deltas=1,2/*, with columns:
+* id
+* ticker
+* sector
+* industry
+* date_base (associated article's release date)
+* date_+1
+* date_+2
+* open_base (opening price at the associated article's release date)
+* close_base (closing price at the associated article's release date)
+* close_+1 (stock's closing price a day after the associated article's release date)
+* close_+2 (stock's closing price two days after the associated article's release date)
+
+### 4. Labeling Articles According to Price Data
+
+Based on the recently imported prices near the date of each article, it is necessary to apply a set of criteria to evaluate whether, given a price evolution after the article's release date, one should buy or sell stock of the mentioned company based on such article. More precisely, this step of this recipe takes as input a set of prices at the specified `deltas` and labels each news article with "buy", "sell" or "do_nothing". This labeling is exactly the target variable with which the text classifier will train later on. Method `label_financial_data()` of `FinancialNewsPredictor` carries out this step.
+
+At its core, this step simply involves the comparision of two prices: a price representative of the company before the news came out, and a price representing the market's reaction to the news. If the latter is above a certain threshold from the former, it is adviseable to label the news with "buy". Alternatively, if the stock's price dips below a certain threshold after the news, the news will be labeled with "sell". Otherwise, "do_nothing" will be applied. This threshold is specified as a relative variation between the latest price with respect to the earliest via `threshold`.
+
+According to the user's input parameters, two different labeling schemes can be followed:
+* Simple Method: If `method ='single'`, the opening price of the new's release date is compared with the closing price of another date. This second date to compare with is specified with `delta_to_examine`. For example, if `delta_to_examine = 3`, the opening price of the new's release date will be compared with the closing price three days after the release date (as long as 3 is included in the employed `deltas`).
+* Moving-Averages Method: If `method = MA`, two averages of prices are compared. Through `base_days`, the closing prices of a set of days within `deltas` is averaged to obtain a price representing the market before the news came out. Also, through `delta_to_examine`, the closing prices of a set of days within `deltas` is averaged to obtain a price representing the market after the news came out. These two average prices will be compared to label the news in a manner that is less sensitive to outlier prices. For instance, if `base_days = [1, 2, 3, 4, 5, 6, 7]` and `delta_to_examine = [6, 7]`, the average closing prices at the end of the week after the new's release date will be compared with the average closing prices of the whole week. 
+
+As an example, if one were to label based on the simpler model, comparing the new's opening price with the closing price 2 days after the release date, one would use the following line of code:
+```
+f.label_financial_data(method='single', delta_to_examine=2, threshold=0.1)
+```
+As a result, following the previous examples, a new table *labeled_data.csv* will be stored in *./BERTforMarketPredictions/deltas=1,2/method=single,delta=3,th=0.1*, with the labeled dataset.
+
+
+
+
 
 
 Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
