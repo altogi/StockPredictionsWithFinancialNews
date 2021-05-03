@@ -138,7 +138,7 @@ Now it is necessary to define an instance of class `FinancialDataImporter` throu
 
 The only parameter for method `import_financial_data()` is `deltas`. This list of integers specifies what market days after each new's release date are considered relevant. The closing market price of each of these relevant dates is extracted for further analysis in the application.
 
-This method also makes sure to store the resulting market data in a table *market_data.csv*, which itself is also in a folder whose name is determined by the selected `deltas`. 
+This method also makes sure to store the resulting market data in a table *market_data.csv*, which itself is also in a folder whose name is determined by the selected `deltas`. This way, if the same `deltas` are used in a different occasion, the dataset can be taken advantage of, instead of performing the same computations all over again.
 
 For example, with `deltas = [1, 2]`, one would execute the following line of code:
 
@@ -173,9 +173,21 @@ As an example, if one were to label based on the simpler model, comparing the ne
 ```
 f.label_financial_data(method='single', delta_to_examine=2, threshold=0.1)
 ```
-As a result, following the previous examples, a new table *labeled_data.csv* will be stored in *./BERTforMarketPredictions/deltas=1,2/method=single,delta=3,th=0.1*, with the labeled dataset.
+As a result, following the previous examples, a new table *labeled_data.csv* will be stored in *./BERTforMarketPredictions/deltas=1,2/method=single,delta=3,th=0.1*, with the labeled dataset. This table will be re-used in other occassions in which `deltas` and the labeling method remain constant.
 
+### 5. Defining the Text Classifier
 
+Before a text classifier model can be trained, method `create_classifier()` of `FinancialNewsPredictor` is necessary. These are the main goals of this method:
+1. To ensure that all required user input is properly specified.
+2. To carry out the preprocessing of the dataset according to the selected model.
+3. To define a ktrain model and a learner to train.
+4. To aid in the selection of a suitable learning rate for the training to come.
+
+The input parameters that this step receives greatly influence how the text classifier model is trained. These are:
+* `model`: This string indicates what model should the text classifier be based on. According to ktrain's source code, the available models are: 'fasttext' for a FastText model, 'nbsvm' for a NBSVM model, 'logreg' for logistic regression using embedding layers, 'bigru' for Bidirectional GRU with pretrained word vectors, 'bert' for BERT Text Classification and 'distilbert' for Hugging Face's DistilBert model.
+* `max_len`: This int indicates the maximum number of words that can be taken into account per document when training the model.
+* `validation_size`: This float sets the size of the validation set used to evaluate the model. 
+* `batch_size`: This int determines how many documents are bundled together at each iteration of training.
 
 
 
@@ -185,11 +197,6 @@ Use this space to show useful examples of how a project can be used. Additional 
 _For more examples, please refer to the [Documentation](https://example.com)_
 
 
-
-<!-- ROADMAP -->
-## Roadmap
-
-See the [open issues](https://github.com/othneildrew/Best-README-Template/issues) for a list of proposed features (and known issues).
 
 
 
