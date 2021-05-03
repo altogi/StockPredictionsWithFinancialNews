@@ -1,7 +1,8 @@
 import pandas as pd
-from datetime import timedelta
+from datetime import timedelta, datetime
 import yfinance as yf
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 class PortfolioSimulator:
@@ -27,12 +28,16 @@ class PortfolioSimulator:
     'Open', and 'Adj Close'.
     - only_validation: boolean, If True, the simulation will only be done with financial news belonging to the
     validation set of the model obtained from FinancialNewsClassifier
+    - start_date: str representing a date, in the form YYYY-mm-dd, at which to start the simulation
+    - end_date: str representing a date, in the form YYYY-mm-dd, at which to end the simulation
     """
     def __init__(self, news_data, predictions, selection=None, starting_amount=10, starting_cash=1e6,
-                 transaction_amount=1, price='Close', only_validation=False):
+                 transaction_amount=1, price='Close', only_validation=False, start_date=None, end_date=None):
 
         self.transaction = transaction_amount
         self.price = price
+        self.starting_amount = starting_amount
+        self.starting_cash = starting_cash
 
         # Extract only news in the validation set
         if only_validation:
@@ -43,6 +48,21 @@ class PortfolioSimulator:
         news_data['release_date'] = pd.to_datetime(news_data['release_date'], utc=False)
         self.data = pd.merge(self.predictions, news_data, left_on='id', right_on='id', how='inner') \
             .sort_values(by=['release_date'])[['id', 'prediction', 'ticker', 'release_date']]
+
+        if start_date is not None:
+            mask1 = pd.to_datetime(self.data['release_date'], utc=True) >= pd.to_datetime(start_date, utc=True)
+            mask1 = mask1.values
+        else:
+            mask1 = np.array([True for _ in self.data['release_date']])
+
+        if end_date is not None:
+            mask2 = pd.to_datetime(self.data['release_date'], utc=True) <= pd.to_datetime(end_date, utc=True)
+            mask2 = mask2.values
+        else:
+            mask2 = np.array([True for _ in self.data['release_date']])
+
+        mask = np.logical_and(mask1, mask2)
+        self.data = self.data.loc[mask, :]
 
         if selection is None:
             self.tickers = self.data['ticker'].unique().tolist()
@@ -81,6 +101,7 @@ class PortfolioSimulator:
             data['Date'] = pd.to_datetime(data['Date'], utc=True)
             self.portfolio = pd.merge(self.portfolio, data, on='Date', how='left')
             self.portfolio['Price_' + tick].ffill(axis=0, inplace=True)
+            self.portfolio['Price_' + tick].bfill(axis=0, inplace=True)
 
     def insert_quantities(self):
         """
@@ -88,6 +109,7 @@ class PortfolioSimulator:
         stock that is held, as well as the cash that is left after the transaction. It employs pandas' ffill method in
         order to propagate previous quantities along the self.portfolio DataFrame.
         """
+        self.portfolio['Date'] = pd.to_datetime(self.portfolio['Date'], utc=True)
         for date, this, operation in zip(self.data['release_date'], self.data['ticker'], self.data['prediction']):
             if this in self.tickers:
                 if operation == 'buy':
@@ -96,6 +118,7 @@ class PortfolioSimulator:
                     quantity_change = -self.transaction
                 else:
                     quantity_change = 0
+                date = pd.to_datetime(date, utc=True)
 
                 # Insert Operation to Portfolio DataFrame
                 self.portfolio.loc[self.portfolio['Date'] == date, 'Operation'] = operation
@@ -107,8 +130,9 @@ class PortfolioSimulator:
                 to_fill = to_fill.ffill(axis=0)
 
                 # Update this ticker according to the model's prediction
-                to_fill['Quantity_' + this][len(to_fill) - 1] = \
-                    to_fill['Quantity_' + this][len(to_fill) - 1] + quantity_change
+                if to_fill['Quantity_' + this][len(to_fill) - 1] + quantity_change >= 0:
+                    to_fill['Quantity_' + this][len(to_fill) - 1] = \
+                        to_fill['Quantity_' + this][len(to_fill) - 1] + quantity_change
 
                 # Insert this into the portfolio dataframe
                 self.portfolio.loc[self.portfolio['Date'] <= date, self.quantity_cols] = to_fill.copy()
@@ -148,24 +172,36 @@ class PortfolioSimulator:
         This method simply serves as a quick visualization of the portfolio performance, comparing it with the returns
         of the S&P 500 as a benchmark.
         """
-        benchmark = yf.download(
-            '^GSPC',
-            start=self.portfolio.index.min() - timedelta(days=1),
-            end=self.portfolio.index.max()
-        )
+        if self.portfolio.index.name != 'Date':
+            self.portfolio['Date'] = pd.to_datetime(self.portfolio['Date'], utc=True)
+            self.portfolio.set_index('Date', inplace=True)
 
-        benchmark = (benchmark[self.price] - benchmark[self.price][0]) * 100 / benchmark[self.price][0]
+        market_benchmark = yf.download(
+            '^GSPC',
+            start=self.data['release_date'].min() - timedelta(days=1),
+            end=self.data['release_date'].max()
+        )
+        market_benchmark = (market_benchmark[self.price] - market_benchmark[self.price][0]) * 100 / \
+            market_benchmark[self.price][0]
+
+        portfolio_benchmark = self.portfolio[self.price_cols].bfill(axis=0).sum(axis=1) * self.starting_amount + \
+            self.starting_cash
+        portfolio_benchmark = (portfolio_benchmark - portfolio_benchmark[0]) * 100 / \
+            portfolio_benchmark[0]
 
         plt.figure(figsize=(15, 10))
 
-        plt.plot(self.portfolio.index, self.portfolio['Return'], label='Portfolio Return')
-        plt.plot(benchmark.index, benchmark, label='S&P 500')
-        plt.scatter(self.portfolio.loc[self.portfolio['Operation'] == 'buy', :].index,
-                    self.portfolio.loc[self.portfolio['Operation'] == 'buy', 'Return'], label='buy', marker="^",
-                    s=80, c='green')
-        plt.scatter(self.portfolio.loc[self.portfolio['Operation'] == 'sell', :].index,
-                    self.portfolio.loc[self.portfolio['Operation'] == 'sell', 'Return'], label='sell', marker="v",
-                    s=80, c='red')
+        plt.plot(self.portfolio.index, self.portfolio['Return'], label='Model-Managed Portfolio')
+        plt.plot(market_benchmark.index, market_benchmark, label='S&P 500')
+        plt.plot(portfolio_benchmark.index, portfolio_benchmark, label='Equally Weighted Portfolio')
+
+        if len(self.portfolio) < 10000:
+            plt.scatter(self.portfolio.loc[self.portfolio['Operation'] == 'sell', :].index,
+                        self.portfolio.loc[self.portfolio['Operation'] == 'sell', 'Return'], label='sell', marker="v",
+                        s=80, c='red')
+            plt.scatter(self.portfolio.loc[self.portfolio['Operation'] == 'buy', :].index,
+                        self.portfolio.loc[self.portfolio['Operation'] == 'buy', 'Return'], label='buy', marker="^",
+                        s=80, c='green')
 
         plt.title('Simulated Portfolio Return', fontsize=22)
         plt.xlabel('Date', fontsize=20)

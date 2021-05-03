@@ -15,23 +15,20 @@
 *** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
 *** https://www.markdownguide.org/basic-syntax/#reference-style-links
 -->
-[![LinkedIn][linkedin-shield]][https://www.linkedin.com/in/altogi/]
+[![LinkedIn][linkedin-shield]][linkedin-url]
 
 <p align="center">
 
-  <h3 align="center">Trading</h3>
+  <h1 align="center">Predicting Stock Market Trends with Financial News</h3>
 
   <p align="center">
-    An awesome README template to jumpstart your projects!
+    An application of BERT to profitable trading.
     <br />
-    <a href="https://github.com/othneildrew/Best-README-Template"><strong>Explore the docs »</strong></a>
-    <br />
-    <br />
-    <a href="https://github.com/othneildrew/Best-README-Template">View Demo</a>
+    <a href="https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/Prediction of Stock Market Evolutions with Financial News.ipynb">View Demo</a>
     ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Report Bug</a>
+    <a href="https://github.com/altogi/StockPredictionsWithFinancialNews/issuess">Report Bug</a>
     ·
-    <a href="https://github.com/othneildrew/Best-README-Template/issues">Request Feature</a>
+    <a href="https://github.com/altogi/StockPredictionsWithFinancialNews/issues">Request Feature</a>
   </p>
 </p>
 
@@ -43,9 +40,6 @@
   <ol>
     <li>
       <a href="#about-the-project">About The Project</a>
-      <ul>
-        <li><a href="#built-with">Built With</a></li>
-      </ul>
     </li>
     <li>
       <a href="#getting-started">Getting Started</a>
@@ -68,62 +62,78 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://example.com)
+In the stock market, information is money. Receiving the information first gives one a significant advantage over other traders.
+Thus, it makes sense that financial news have a great influence on the market.
 
-There are many great README templates available on GitHub, however, I didn't find one that really suit my needs so I created this enhanced one. I want to create a README template so amazing that it'll be the last one you ever need -- I think this is it.
+Given the recent rise in the availability of data, and the apparition of revolutionary NLP techniques, it has been attempted in many occasions to predict market trends based on financial news. The majority of the existing solutions rely on sentiment analysis, assuming that a positive document sentiment is directly related to increases in a security's price, and viceversa. Sentiment is either extracted using a predefined dictionary of tagged words, or by applying deep learning techniques that rely on a large datasets of labeled news. An advanced example of rule-based sentiment analysis is VADER, a model that is sensitive not only to polarity, but also to a document's intensity.
 
-Here's why:
-* Your time should be focused on creating something amazing. A project that solves a problem and helps others
-* You shouldn't be doing the same tasks over and over like creating a README from scratch
-* You should element DRY principles to the rest of your life :smile:
+With the recent dawn of the Transformer, it is now possible to extract the sentiment from a document in a much quicker non-sequential procedure, and with the usage of pre-trained models such as BERT, applying these models to a desired use case has never been simpler. An example of this is FinBERT, a text classifier predicting sentiment with a fine-tuned version of BERT.
 
-Of course, no one template will serve all projects since your needs may be different. So I'll be adding more in the near future. You may also suggest changes by forking this repo and creating a pull request or opening an issue. Thanks to all the people have have contributed to expanding this template!
+Nevertheless, sentiment can act as an intermediate factor between the news, and the stock's price. As a result, developing a text classifier to predict sentiment is not as efficient as directly predicting price evolutions, when the objective is to develop a profitable trading strategy.
 
-A list of commonly used resources that I find helpful are listed in the acknowledgements.
+This work has implemented a text classifier based on BERT, fine-tuned with a dataset of financial news, and trained in order to predict whether a stock's price will rise or fall. As opposed to FinBERT, sentiment is not taken into account. Instead, a set of criteria based on the price evolutions close to the release date of every news article have been applied, in order to label the dataset with which BERT is fine-tuned. Moreover, this work has been developed based on a much more extensive dataset than the one used for FinBERT, thus further capturing the uncertainties of the market. In consequence, it is possible to profitably manage a portfolio relying exclusively on this text classifier, without complementing it with other trading strategies, as many sentiment-based trading applications do.
 
-### Built With
 
-This section should list any major frameworks that you built your project using. Leave any add-ons/plugins for the acknowledgements section. Here are a few examples.
-* [Bootstrap](https://getbootstrap.com)
-* [JQuery](https://jquery.com)
-* [Laravel](https://laravel.com)
 
 
 
 <!-- GETTING STARTED -->
 ## Getting Started
-
-This is an example of how you may give instructions on setting up your project locally.
 To get a local copy up and running follow these simple example steps.
-
 ### Prerequisites
+These are some things that you will need before locally setting up this application:
 
-This is an example of how to list things you need to use the software and how to install them.
-* npm
+* **Memory Requirements:** This project was completely run and tested on Google Colab, making use of its 12GB NVIDIA Tesla K80 GPU. Although the application can be run with less memory-consuming models that do not require a GPU (DistilBERT), it is recommendable to use similar levels of RAM, especially for large datasets.
+* **yfinance:** Install with the following command.
   ```sh
-  npm install npm@latest -g
+  pip3 install yfinance
+  ```
+* **TensorFlow 2:** If not already installed.
+  ```sh
+  pip3 install tensorflow
+  ```
+* **ktrain:** Install with the following command.
+  ```sh
+  pip3 install ktrain
   ```
 
 ### Installation
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
+1. Clone the repo
    ```sh
-   git clone https://github.com/your_username_/Project-Name.git
+   git clone https://github.com/altogi/StockPredictionsWithFinancialNews.git
    ```
-3. Install NPM packages
-   ```sh
-   npm install
-   ```
-4. Enter your API in `config.js`
-   ```JS
-   const API_KEY = 'ENTER YOUR API';
-   ```
-
-
+3. Install yfinance and ktrain.
+4. Enjoy!
 
 <!-- USAGE EXAMPLES -->
 ## Usage
+### Selecting a Dataset
+To use this application, a dataset of financial news is needed. This is the dataset on which the text classification model will be trained, and later on validated. This dataset has to have the following features:
+* An identification column **id**, representing every news article.
+* A column **content** containing the article's text.
+* A field **ticker** with the stock ticker of the company mentioned in the article.
+* A column **release_date** with the date in which the article came out.
+
+A great dataset to use for this application is *us_equities_news_dataset.csv* from Kaggle's [Historical financial news archive](https://www.kaggle.com/gennadiyr/us-equities-news-data). This dataset is a news archive of more than 800 american companies for the last 12 years, and has been used in every step of the development of this project.
+
+### Creating a *FinancialNewsPredictor* Object
+This object will carry out all of the steps of the application, and thus its correct definition is very important. Besides taking the aforementioned dataset as input, these three parameters are required to ensure the execution goes as desired:
+1. *base_directory:* This is the root directory in which all of the files generated during the application's execution will be stored. By default, this is set to be the directory in which the application is located.
+2. *selection:* To tailor the model to a reduced number of companies, it is possible to apply a selection of tickers instead of all of the companies included in the financial news dataset. As a list of strings, one can specify a number of tickers, a number of sectors, or a number of industries, in order to filter the dataset according to such selection.
+3. *selection_mode:* To specify the selection mode, one must enter either 'ticker', 'industry', or 'sector' for this parameter, thus letting the application know what the selection stands for.
+
+The code snippet below shows how one would create a *FinancialNewsPredictor* object focusing on companies from the technology or financial services sectors.
+
+```
+f = FinancialNewsPredictor(df_news, 
+                         base_directory='./BERTforMarketPredictions',
+                         selection=['Technology', 'Financial Services'],
+                         selection_mode='sector')
+```
+
+### Importing Financial Data
+
 
 Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
 
@@ -198,5 +208,5 @@ Project Link: [https://github.com/your_username/repo_name](https://github.com/yo
 [license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=for-the-badge
 [license-url]: https://github.com/othneildrew/Best-README-Template/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/othneildrew
+[linkedin-url]: https://www.linkedin.com/in/altogi/
 [product-screenshot]: images/screenshot.png

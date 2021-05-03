@@ -57,7 +57,7 @@ class FinancialNewsPredictor:
         self.predictions = None
         self.model = None
         self.directory_selected, self.directory_labeled, self.directory_model = None, None, None
-        self.simulator, self.simulated_portfolio = None, None
+        self.directory_portfolio, self.simulator, self.simulated_portfolio = None, None, None
 
     def import_financial_data(self, deltas=None):
         """This method creates an instance of class FinancialDataImporter in order to import market prices of the
@@ -145,7 +145,7 @@ class FinancialNewsPredictor:
             self.predictions = pd.read_csv(self.directory_model + '/predictions.csv', sep='|')
             self.model = ktrain.load_predictor(self.directory_model + '/predictor')
 
-        elif Path(self.directory_model + '/predictor').is_file() and Path(
+        elif Path(self.directory_model + '/predictor/config.json').is_file() and Path(
                 self.directory_model + '/preprocessing.pkl').is_file():
             # Already trained model but still need predictions
             with open(self.directory_model + '/preprocessing.pkl', 'rb') as f_pickle:
@@ -170,8 +170,8 @@ class FinancialNewsPredictor:
             if Path(self.directory_model + '/preprocessing.pkl').is_file():
                 with open(self.directory_model + '/preprocessing.pkl', 'rb') as f_pickle:
                     self.classifier_trainer.train_preprocessed, \
-                        self.classifier_trainer.test_preprocessed, \
-                        self.classifier_trainer.preprocessing = pickle.load(f_pickle)
+                    self.classifier_trainer.test_preprocessed, \
+                    self.classifier_trainer.preprocessing = pickle.load(f_pickle)
             else:
                 self.classifier_trainer.preprocess_data()
                 with open(self.directory_model + '/preprocessing.pkl', 'wb') as f_pickle:
@@ -218,19 +218,34 @@ class FinancialNewsPredictor:
             self.predictions.to_csv(self.directory_model + '/predictions.csv', sep='|')
 
     def simulate_portfolio(self, selection=None, starting_amount=100, transaction_amount=1,
-                           price='Close', only_validation=False, starting_cash=1e3):
+                           price='Close', only_validation=False, starting_cash=1e3, start_date=None, end_date=None):
         """This method simulates how a portfolio based on the model's predictions would perform, using an object of
         class PortfolioSimulator."""
+        self.directory_portfolio = self.directory_model + '/selection=[' + ','.join([s for s in selection]) + \
+            '],starting_stocks=' + str(starting_amount) + ',starting_cash=' + \
+            str(starting_cash) + ',transaction=' + str(transaction_amount)
 
-        self.simulator = PortfolioSimulator(self.data, self.predictions, selection=selection,
-                                            starting_amount=starting_amount, transaction_amount=transaction_amount,
-                                            price=price, only_validation=only_validation, starting_cash=starting_cash)
-        self.simulator.insert_prices()
-        self.simulator.insert_quantities()
-        self.simulator.compute_total()
-        self.simulated_portfolio = self.simulator.portfolio
-        self.simulated_portfolio.to_csv(self.directory_model + '/portfolio.csv')
+        if not Path(self.directory_portfolio + '/portfolio.csv').is_file():
+            self.simulator = PortfolioSimulator(self.data, self.predictions, selection=selection,
+                                                starting_amount=starting_amount, transaction_amount=transaction_amount,
+                                                price=price, only_validation=only_validation,
+                                                starting_cash=starting_cash, start_date=start_date, end_date=end_date)
+            self.simulator.insert_prices()
+            self.simulator.insert_quantities()
+            self.simulator.compute_total()
+            self.simulated_portfolio = self.simulator.portfolio
+
+            Path(self.directory_portfolio).mkdir(parents=True, exist_ok=True)
+            self.simulated_portfolio.to_csv(self.directory_portfolio + '/portfolio.csv')
+        else:
+            self.simulator = PortfolioSimulator(self.data, self.predictions, selection=selection,
+                                                starting_amount=starting_amount, transaction_amount=transaction_amount,
+                                                price=price, only_validation=only_validation,
+                                                starting_cash=starting_cash, start_date=start_date, end_date=end_date)
+            self.simulator.portfolio = pd.read_csv(self.directory_portfolio + '/portfolio.csv')
+            self.simulated_portfolio = self.simulator.portfolio
         self.simulator.visualize()
+
 
 # df = pd.read_csv('us_equities_news_ultra_short.csv', sep='|', parse_dates=['release_date'])
 # f = FinancialNewsPredictor(df)
@@ -240,4 +255,4 @@ class FinancialNewsPredictor:
 # f.create_classifier(model='distilbert', max_len=50, batch_size=3, split_type='random')
 # f.train_classifier(epochs=1)
 # f.predict_with_classifier()
-# f.simulate_portfolio(selection='TGT')
+# f.simulate_portfolio(selection='TGT', start_date='2008-11-01', end_date='2009-03-01')
