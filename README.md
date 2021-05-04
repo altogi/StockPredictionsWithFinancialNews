@@ -50,23 +50,18 @@
     </li>
     <li><a href="#usage">Usage</a>
       <ul>
-        <li><a href="#dataset">1. Selecting a Dataset</a></li>
-        <li><a href="#installation">Installation</a></li>
-        <li><a href="#installation">Installation</a></li>
-        <li><a href="#installation">Installation</a></li>
-        <li><a href="#installation">Installation</a></li>
-        <li><a href="#installation">Installation</a></li>
-        <li><a href="#installation">Installation</a></li>
+        <li><a href="#1-selecting-a-dataset">1. Selecting a Dataset</a></li>
+        <li><a href="#2-creating-a-financialnewspredictor-object">2. Creating a `FinancialNewsPredictor` Object</a></li>
+        <li><a href="#3-importing-financial-data">3. Importing Financial Data</a></li>
+        <li><a href="#4-labeling-articles-according-to-price-data">4. Labeling Articles According to Price Data</a></li>
+        <li><a href="#5-defining-the-text-classifier">5. Defining the Text Classifier</a></li>
+        <li><a href="#6-training-and-predicting">6. Training and Predicting</a></li>
+        <li><a href="#7-simulating-a-model-managed-portfolio">7. Simulating a Model-Managed Portfolio</a></li>
       </ul>
     </li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgements">Acknowledgements</a></li>
+    <li><a href="##project-structure">Project Structure</a></li>
   </ol>
 </details>
-
 
 
 <!-- ABOUT THE PROJECT -->
