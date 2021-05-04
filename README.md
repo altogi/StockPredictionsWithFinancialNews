@@ -110,6 +110,9 @@ These are some things that you will need before locally setting up this applicat
 
 <!-- USAGE EXAMPLES -->
 ## Usage
+
+For a hands-on demo of the usage of the application, see [this notebook](https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/Prediction_of_Stock_Market_Evolutions_with_Financial_News.ipynb), including a step-by-step analysis.
+
 ### 1. Selecting a Dataset
 To use this application, a dataset of financial news is needed. This is the dataset on which the text classification model will be trained, and later on validated. This dataset has to have the following features:
 * An identification column **id**, representing every news article.
