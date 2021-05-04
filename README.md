@@ -24,7 +24,7 @@
   <p align="center">
     An application of BERT to profitable trading.
     <br />
-    <a href="https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/Prediction of Stock Market Evolutions with Financial News.ipynb">View Demo</a>
+    <a href="https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/Prediction_of_Stock_Market_Evolutions_with_Financial_News.ipynb">View Demo</a>
     ·
     <a href="https://github.com/altogi/StockPredictionsWithFinancialNews/issuess">Report Bug</a>
     ·
