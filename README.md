@@ -262,18 +262,18 @@ f.simulate_portfolio(starting_amount=1000,
 ## Project Structure
 
 The application consists on the following scripts:
-1. (*main.py*)[https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/main.py]: This is the main file of the project, containing all the aforementioned methods related to class `FinancialNewsPredictor`. It acts as a wrapper of all of the
+1. [*main.py*](https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/main.py): This is the main file of the project, containing all the aforementioned methods related to class `FinancialNewsPredictor`. It acts as a wrapper of all of the
     project's scripts, in order to execute all of them in a simple manner with a few lines of code. It makes sure that the results generated in previous steps are properly saved     so that further processing can easily load the results knowing the chosen parameters of the case.
-2.  (*ImportFinancialData.py*)[https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/ImportFinancialData.py]: This script contains the definitions and all the methods of class `FinancialDataImporter`, the object in charge of downloading market data for a specified set of `deltas` and inserting such prices into the original dataset of financial news.
-3.  (*LabelFinancialData.py*)[https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/LabelFinancialData.py]: Here is where class `FinancialDataLabeler` is defined, with the goal of labeling every news article with 'buy', 'sell', or 'do_nothing' depending on the evolution of prices close to the news' release date, taking into account the price criteria specified by the user.
-4.  (*ClassifyFinancialNews.py*)[https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/ClassifyFinancialNews.py]: This script defines class `FinancialNewsClassifier` and all of its methods. This class acts as a wrapper for the preprocessing, defining, training, predicting, and storing, related to a text
+2.  [*ImportFinancialData.py*](https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/ImportFinancialData.py): This script contains the definitions and all the methods of class `FinancialDataImporter`, the object in charge of downloading market data for a specified set of `deltas` and inserting such prices into the original dataset of financial news.
+3.  [*LabelFinancialData.py*](https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/LabelFinancialData.py): Here is where class `FinancialDataLabeler` is defined, with the goal of labeling every news article with 'buy', 'sell', or 'do_nothing' depending on the evolution of prices close to the news' release date, taking into account the price criteria specified by the user.
+4.  [*ClassifyFinancialNews.py*](https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/ClassifyFinancialNews.py): This script defines class `FinancialNewsClassifier` and all of its methods. This class acts as a wrapper for the preprocessing, defining, training, predicting, and storing, related to a text
         classification model with ktrain.
-5.  (*SimulatePortfolio.py*)[https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/SimulatePortfolio.py]: Defines class `PortfolioSimulator` as well as all of its methods, to find out how well a portfolio that follows the predictions made by a text classifier
+5.  [*SimulatePortfolio.py*](https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/SimulatePortfolio.py): Defines class `PortfolioSimulator` as well as all of its methods, to find out how well a portfolio that follows the predictions made by a text classifier
     from class `FinancialNewsClassifier` works out. This simulation works simply by buying or selling according to the
     model's signals, and based on these orders, update the portfolio's equity and cash taking into account the market
     price of every equity.
 
-Moreover, to demonstrate the functionalities of the application, as well as to give an example of how its steps are executed, a notebook (*Prediction_of_Stock_Market_Evolutions_with_Financial_News.ipynb*)[https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/Prediction_of_Stock_Market_Evolutions_with_Financial_News.ipynb] is at the user's disposal.
+Moreover, to demonstrate the functionalities of the application, as well as to give an example of how its steps are executed, a notebook [*Prediction_of_Stock_Market_Evolutions_with_Financial_News.ipynb*](https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/Prediction_of_Stock_Market_Evolutions_with_Financial_News.ipynb) is at the user's disposal.
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
