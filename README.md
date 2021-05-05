@@ -166,7 +166,7 @@ And taking into account the `base_directory` specified earlier, there would be a
 
 ### 4. Labeling Articles According to Price Data
 
-Based on the recently imported prices near the date of each article, it is necessary to apply a set of criteria to evaluate whether, given a price evolution after the article's release date, one should buy or sell stock of the mentioned company based on such article. More precisely, this step of this recipe takes as input a set of prices at the specified `deltas` and labels each news article with "buy", "sell" or "do_nothing". This labeling is exactly the target variable with which the text classifier will train later on. Method `label_financial_data()` of `FinancialNewsPredictor` carries out this step.
+Based on the recently imported prices near the date of each article, it is necessary to apply a set of criteria to evaluate whether, given a price evolution after the article's release date, one should buy or sell stock of the mentioned company based on such article. More precisely, this step of this recipe takes as input a set of prices at the specified `deltas` and labels each news article with "buy", "sell" or "do_nothing". This labeling is exactly the target variable with which the text classifier will train later on. Method `label_financial_data()` of `FinancialNewsPredictor` carries out this step, at the same time creating an instance of class `FinancialDataLabeler`.
 
 At its core, this step simply involves the comparision of two prices: a price representative of the company before the news came out, and a price representing the market's reaction to the news. If the latter is above a certain threshold from the former, it is adviseable to label the news with "buy". Alternatively, if the stock's price dips below a certain threshold after the news, the news will be labeled with "sell". Otherwise, "do_nothing" will be applied. This threshold is specified as a relative variation between the latest price with respect to the earliest via `threshold`.
 
@@ -182,7 +182,7 @@ As a result, following the previous examples, a new table *labeled_data.csv* wil
 
 ### 5. Defining the Text Classifier
 
-Before a text classifier model can be trained, method `create_classifier()` of `FinancialNewsPredictor` is necessary. These are the main goals of this method:
+Before a text classifier model can be trained, method `create_classifier()` of `FinancialNewsPredictor` is necessary. This method involves creating an instance of class `FinancialNewsClassifier`. These are the main goals of this method:
 1. To ensure that all required user input is properly specified.
 2. To carry out the preprocessing of the dataset according to the selected model.
 3. To define a ktrain model and a learner to train.
@@ -229,7 +229,7 @@ f.predict_with_classifier()
 
 ### 7. Simulating a Model-Managed Portfolio
 
-To validate the obtained predictions, it makes sense to simulate the real-life performance of a portfolio that is exclusively managed by the model's predictions. Since in the end the accuracy of the model is also significantly dependent on the price criteria applied to label the dataset, simulating the resulting portfolio is a way to validate both the trained model and the price criteria themselves at the same time. To this end, a method `simulate_portfolio` of `FinancialNewsPredictor` can be used.
+To validate the obtained predictions, it makes sense to simulate the real-life performance of a portfolio that is exclusively managed by the model's predictions. Since in the end the accuracy of the model is also significantly dependent on the price criteria applied to label the dataset, simulating the resulting portfolio is a way to validate both the trained model and the price criteria themselves at the same time. To this end, a method `simulate_portfolio` of `FinancialNewsPredictor` can be used. This method employs an instance of class `PortfolioSimulator`.
 
 The simulation starts with a portfolio made out of an equal number of a specified set of stocks, as well as a specified amount of cash. For any point in the simulation, the portfolio's value is the sum of the market value of every stock in the portfolio and the current amount of cash owned. Financial news and their predictions are processed in the ascending order of their release dates. In this way, for each of the predictions related to the stocks in the simulated portfolio, three actions are possible:
 * If the prediction is "buy", the quantity of the stock mentioned in the news is increased, and the cash amount is reduced according to the stock's market price.
@@ -260,6 +260,20 @@ f.simulate_portfolio(starting_amount=1000,
 
 
 ## Project Structure
+
+The application consists on the following scripts:
+1. (*main.py*)[https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/main.py]: This is the main file of the project, containing all the aforementioned methods related to class `FinancialNewsPredictor`. It acts as a wrapper of all of the
+    project's scripts, in order to execute all of them in a simple manner with a few lines of code. It makes sure that the results generated in previous steps are properly saved     so that further processing can easily load the results knowing the chosen parameters of the case.
+2.  (*ImportFinancialData.py*)[https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/ImportFinancialData.py]: This script contains the definitions and all the methods of class `FinancialDataImporter`, the object in charge of downloading market data for a specified set of `deltas` and inserting such prices into the original dataset of financial news.
+3.  (*LabelFinancialData.py*)[https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/LabelFinancialData.py]: Here is where class `FinancialDataLabeler` is defined, with the goal of labeling every news article with 'buy', 'sell', or 'do_nothing' depending on the evolution of prices close to the news' release date, taking into account the price criteria specified by the user.
+4.  (*ClassifyFinancialNews.py*)[https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/ClassifyFinancialNews.py]: This script defines class `FinancialNewsClassifier` and all of its methods. This class acts as a wrapper for the preprocessing, defining, training, predicting, and storing, related to a text
+        classification model with ktrain.
+5.  (*SimulatePortfolio.py*)[https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/SimulatePortfolio.py]: Defines class `PortfolioSimulator` as well as all of its methods, to find out how well a portfolio that follows the predictions made by a text classifier
+    from class `FinancialNewsClassifier` works out. This simulation works simply by buying or selling according to the
+    model's signals, and based on these orders, update the portfolio's equity and cash taking into account the market
+    price of every equity.
+
+Moreover, to demonstrate the functionalities of the application, as well as to give an example of how its steps are executed, a notebook (*Prediction_of_Stock_Market_Evolutions_with_Financial_News.ipynb*)[https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/Prediction_of_Stock_Market_Evolutions_with_Financial_News.ipynb] is at the user's disposal.
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
