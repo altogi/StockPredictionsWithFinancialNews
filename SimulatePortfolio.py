@@ -38,6 +38,7 @@ class PortfolioSimulator:
         self.price = price
         self.starting_amount = starting_amount
         self.starting_cash = starting_cash
+        self.content = predictions[['id', 'content']]
 
         # Extract only news in the validation set
         if only_validation:
@@ -167,7 +168,7 @@ class PortfolioSimulator:
         self.portfolio['Return'] = (self.portfolio['Total'] - self.portfolio['Total'][0]) * 100 \
                                    / self.portfolio['Total'][0]
 
-    def visualize(self):
+    def visualize(self, interactive=False):
         """
         This method simply serves as a quick visualization of the portfolio performance, comparing it with the returns
         of the S&P 500 as a benchmark.

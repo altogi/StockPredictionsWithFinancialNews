@@ -24,7 +24,7 @@ class FinancialNewsClassifier:
             'distilbert' for Hugging Face DistilBert model
          - maxlen: This int indicates the maximum number of words that can be taken into account per document.
          - validation_size: This float sets the size of the validation set used to evaluate the model.
-         - batch_size:
+         - batch_size: This int determines how many documents are bundled together at each iteration of training.
          - split_type: Two types of splitting into test and training sets are considered. split_type='random' simply
          randomly splits 'labeled_news' according to the specified fraction (validation_size), ensuring an homogeneous
          distribution of each class. split_type='time_series' ensures that only the latest entries of the dataset are

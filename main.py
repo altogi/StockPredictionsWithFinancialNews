@@ -94,7 +94,7 @@ class FinancialNewsPredictor:
 
         Path(self.directory_selected).mkdir(parents=True, exist_ok=True)
 
-    def label_financial_data(self, method='single', delta_to_examine=3, threshold=0.1):
+    def label_financial_data(self, method='single', delta_to_examine=3, threshold=0.1, base_days=None):
         """This method creates an instance of the class FinancialDataLabeler in order to label market data with a
         specified criterion."""
 
@@ -111,7 +111,8 @@ class FinancialNewsPredictor:
         else:
             self.market_data = self.market_data.dropna(how='any')
             self.data_labeler = FinancialDataLabeler(self.data, self.market_data, self.deltas, method=method,
-                                                     delta_to_examine=delta_to_examine, threshold=threshold)
+                                                     delta_to_examine=delta_to_examine, threshold=threshold,
+                                                     base_days=base_days)
             self.data_labeler.extract_prices_to_compare()
             self.data_labeler.label_and_join()
             self.data = self.data_labeler.news_data
@@ -131,14 +132,13 @@ class FinancialNewsPredictor:
         print(f'{self.data["sell"].sum()} + {self.data["buy"].sum()} + {self.data["do_nothing"].sum()} ' +
               f'= {self.data["sell"].sum() + self.data["buy"].sum() + self.data["do_nothing"].sum()}={len(self.data)}')
 
-    def create_classifier(self, model='bert', max_len=500, validation_size=0.2, batch_size=32, split_type='random',
-                          epochs=3):
-        """This method uses ktrain and an instance of the class FinancialNewsClassifier create a text classifyer model,
+    def create_classifier(self, model='bert', max_len=500, validation_size=0.2, batch_size=32, split_type='random'):
+        """This method uses ktrain and an instance of the class FinancialNewsClassifier create a text classifier model,
         and acts as an interface to determine its optimum learning rate."""
 
         self.directory_model = \
             self.directory_labeled + '/model=' + model + ',max_len=' + str(max_len) + ',val_size=' + \
-            str(validation_size) + ',batch=' + str(batch_size) + ',split_type=' + split_type + ',epochs=' + str(epochs)
+            str(validation_size) + ',batch=' + str(batch_size) + ',split_type=' + split_type
 
         if Path(self.directory_model + '/predictions.csv').is_file():
             # Recover trained model and predictions
@@ -217,7 +217,7 @@ class FinancialNewsPredictor:
             self.predictions = self.classifier_trainer.predictions
             self.predictions.to_csv(self.directory_model + '/predictions.csv', sep='|')
 
-    def simulate_portfolio(self, selection=None, starting_amount=100, transaction_amount=1,
+    def simulate_portfolio(self, selection=None, starting_amount=100, transaction_amount=1, interactive=False,
                            price='Close', only_validation=False, starting_cash=1e3, start_date=None, end_date=None):
         """This method simulates how a portfolio based on the model's predictions would perform, using an object of
         class PortfolioSimulator."""
@@ -244,7 +244,7 @@ class FinancialNewsPredictor:
                                                 starting_cash=starting_cash, start_date=start_date, end_date=end_date)
             self.simulator.portfolio = pd.read_csv(self.directory_portfolio + '/portfolio.csv')
             self.simulated_portfolio = self.simulator.portfolio
-        self.simulator.visualize()
+        self.simulator.visualize(interactive=interactive)
 
 
 # df = pd.read_csv('us_equities_news_ultra_short.csv', sep='|', parse_dates=['release_date'])
@@ -255,4 +255,4 @@ class FinancialNewsPredictor:
 # f.create_classifier(model='distilbert', max_len=50, batch_size=3, split_type='random')
 # f.train_classifier(epochs=1)
 # f.predict_with_classifier()
-# f.simulate_portfolio(selection='TGT', start_date='2008-11-01', end_date='2009-03-01')
+# f.simulate_portfolio(selection='TGT', start_date='2008-11-01', end_date='2009-03-01', interactive=True)
