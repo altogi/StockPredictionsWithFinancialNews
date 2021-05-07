@@ -1,5 +1,6 @@
 import pandas as pd
 from datetime import timedelta, datetime
+from ipywidgets import interact, SelectionSlider, fixed
 import yfinance as yf
 import matplotlib.pyplot as plt
 import numpy as np
@@ -47,7 +48,7 @@ class PortfolioSimulator:
             self.predictions = predictions[['id', 'prediction']]
 
         news_data['release_date'] = pd.to_datetime(news_data['release_date'], utc=False)
-        self.data = pd.merge(self.predictions, news_data, left_on='id', right_on='id', how='inner') \
+        self.data = pd.merge(self.predictions, news_data, left_on='id', right_on='id', how='left') \
             .sort_values(by=['release_date'])[['id', 'prediction', 'ticker', 'release_date']]
 
         if start_date is not None:
@@ -84,6 +85,8 @@ class PortfolioSimulator:
         self.portfolio.iloc[0, 3:] = starting_amount
         self.portfolio.iloc[0, 1] = starting_cash
         self.portfolio.iloc[0, 2] = 'do_nothing'
+
+        self.market_benchmark, self.portfolio_benchmark = None, None
 
     def insert_prices(self):
         """
@@ -171,30 +174,51 @@ class PortfolioSimulator:
     def visualize(self, interactive=False):
         """
         This method simply serves as a quick visualization of the portfolio performance, comparing it with the returns
-        of the S&P 500 as a benchmark.
+        of the S&P 500 as a benchmark. If interactive is True, and if running in an iPython notebook environment,
+        a slider for a date selection appears. This slider allows the user to view the news of the dataset closest to
+        such date, as well as the predictor's response to the news.
         """
+
         if self.portfolio.index.name != 'Date':
             self.portfolio['Date'] = pd.to_datetime(self.portfolio['Date'], utc=True)
             self.portfolio.set_index('Date', inplace=True)
 
-        market_benchmark = yf.download(
+        self.market_benchmark = yf.download(
             '^GSPC',
             start=self.data['release_date'].min() - timedelta(days=1),
             end=self.data['release_date'].max()
         )
-        market_benchmark = (market_benchmark[self.price] - market_benchmark[self.price][0]) * 100 / \
-            market_benchmark[self.price][0]
+        self.market_benchmark = (self.market_benchmark[self.price] - self.market_benchmark[self.price][0]) * 100 / \
+            self.market_benchmark[self.price][0]
 
-        portfolio_benchmark = self.portfolio[self.price_cols].bfill(axis=0).sum(axis=1) * self.starting_amount + \
+        self.portfolio_benchmark = self.portfolio[self.price_cols].bfill(axis=0).sum(axis=1) * self.starting_amount + \
             self.starting_cash
-        portfolio_benchmark = (portfolio_benchmark - portfolio_benchmark[0]) * 100 / \
-            portfolio_benchmark[0]
+        self.portfolio_benchmark = (self.portfolio_benchmark - self.portfolio_benchmark[0]) * 100 / \
+            self.portfolio_benchmark[0]
 
-        plt.figure(figsize=(15, 10))
+        if interactive:
+            dates = self.portfolio.index
+            options = [(date.strftime(' %d %b %Y '), date) for date in dates]
 
-        plt.plot(self.portfolio.index, self.portfolio['Return'], label='Model-Managed Portfolio')
-        plt.plot(market_benchmark.index, market_benchmark, label='S&P 500')
-        plt.plot(portfolio_benchmark.index, portfolio_benchmark, label='Equally Weighted Portfolio')
+            selection_range_slider = SelectionSlider(
+                value=dates[0],
+                options=options,
+                description='Select a Date:',
+                style={'description_width': 'initial'},
+                orientation='horizontal',
+                layout={'width': '750px', 'height': '50px'}
+            )
+            _ = interact(self.return_selected_date, date=selection_range_slider)
+        else:
+            _, _ = self.plot_single_frame()
+            plt.show()
+
+    def plot_single_frame(self):
+        fig, ax = plt.subplots(figsize=(10, 6))
+
+        ax.plot(self.portfolio.index, self.portfolio['Return'], label='Model-Managed Portfolio')
+        ax.plot(self.market_benchmark.index, self.market_benchmark, label='S&P 500')
+        ax.plot(self.portfolio_benchmark.index, self.portfolio_benchmark, label='Equally Weighted Portfolio')
 
         if len(self.portfolio) < 10000:
             plt.scatter(self.portfolio.loc[self.portfolio['Operation'] == 'sell', :].index,
@@ -204,12 +228,34 @@ class PortfolioSimulator:
                         self.portfolio.loc[self.portfolio['Operation'] == 'buy', 'Return'], label='buy', marker="^",
                         s=80, c='green')
 
-        plt.title('Simulated Portfolio Return', fontsize=22)
-        plt.xlabel('Date', fontsize=20)
-        plt.ylabel('Return [%]', fontsize=20)
-        plt.xticks(fontsize=16)
-        plt.yticks(fontsize=16)
-        plt.legend(fontsize=18)
+        ax.set_title('Simulated Portfolio Return', fontsize=22)
+        ax.set_xlabel('Date', fontsize=18)
+        ax.set_ylabel('Return [%]', fontsize=18)
+        ax.tick_params(axis='both', labelsize=14)
+        ax.legend(fontsize=14)
         plt.tight_layout()
+        return fig, ax
+
+    def return_selected_date(self, date):
+        date = date.tz_convert('utc')
+        all_dates = self.data['release_date'].apply(lambda x: x.tz_localize('utc'))
+        closest_index = abs(all_dates - date).argmin()
+        closest_date = all_dates.iloc[closest_index]
+        content_id = self.data.iloc[closest_index, :]['id']
+        ticker = self.data.iloc[closest_index, :]['ticker']
+        prediction = self.data.iloc[closest_index, :]['prediction']
+        content = self.content.loc[self.content['id'] == content_id, 'content'].values[0]
+
+        fig, ax = self.plot_single_frame()
+        ax.plot([closest_date, closest_date],
+                [0, self.portfolio['Return'].max()],
+                label='selection',
+                c='black')
         plt.show()
 
+        print('----------------------------------------------------------------')
+        print('COMPANY: ' + ticker + ' - PREDICTION: ' + prediction)
+        line_width = 100
+        top = 1000
+        for cut1, cut2 in zip(range(0, top - line_width, line_width), range(line_width, top, line_width)):
+            print(content[cut1:cut2])

@@ -220,7 +220,9 @@ class FinancialNewsPredictor:
     def simulate_portfolio(self, selection=None, starting_amount=100, transaction_amount=1, interactive=False,
                            price='Close', only_validation=False, starting_cash=1e3, start_date=None, end_date=None):
         """This method simulates how a portfolio based on the model's predictions would perform, using an object of
-        class PortfolioSimulator."""
+        class PortfolioSimulator. If interactive is True, and if running in an iPython notebook environment,
+        a slider for a date selection appears. This slider allows the user to view the news of the dataset closest to
+        such date, as well as the predictor's response to the news. """
         self.directory_portfolio = self.directory_model + '/selection=[' + ','.join([s for s in selection]) + \
             '],starting_stocks=' + str(starting_amount) + ',starting_cash=' + \
             str(starting_cash) + ',transaction=' + str(transaction_amount)
@@ -245,14 +247,4 @@ class FinancialNewsPredictor:
             self.simulator.portfolio = pd.read_csv(self.directory_portfolio + '/portfolio.csv')
             self.simulated_portfolio = self.simulator.portfolio
         self.simulator.visualize(interactive=interactive)
-
-
-# df = pd.read_csv('us_equities_news_ultra_short.csv', sep='|', parse_dates=['release_date'])
-# f = FinancialNewsPredictor(df)
-# f.import_financial_data(deltas=[1, 2, 3, 4, 5, 6, 7, 10, 14])
-# f.apply_selection()
-# f.label_financial_data(method='MA', delta_to_examine=[6, 7], threshold=0.01)
-# f.create_classifier(model='distilbert', max_len=50, batch_size=3, split_type='random')
-# f.train_classifier(epochs=1)
-# f.predict_with_classifier()
-# f.simulate_portfolio(selection='TGT', start_date='2008-11-01', end_date='2009-03-01', interactive=True)
+        
