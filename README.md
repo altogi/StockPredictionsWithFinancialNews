@@ -6,7 +6,6 @@
 -->
 
 
-Once the model has been trained, predicting simply involves applying the model to the whole labeled dataset. As a result, the dataset of financial news will be labeled not only according to the price criteria specified earlier on, but also by the model's predictions. This resulting dataset includes a column 'is_validation' that indicates whether each news article was used for training the model or not. These predictions are stored in a table *predictions.csv* under the same folder as all model files. The ktrain predictor resulting from training is also stored under the same directory, in a folder *predictor*. To predict, simply run the following:
 
 <!-- PROJECT SHIELDS -->
 <!--
@@ -34,7 +33,6 @@ Once the model has been trained, predicting simply involves applying the model t
 </p>
 
 
-Training is carried out with ktrain's `autofit()` method, which implements a triangular learning rate policy. In other words, every epoch is divided into two halves: in the first half, the learning rate increases linearly from a base rate to the learning rate specified by the user, whereas in the second half it decreases linearly from such maximum to a near-zero rate. This training scheme was chosen since [it is well suited for Keras built-in training callbacks, such as `EarlyStopping`.](https://towardsdatascience.com/ktrain-a-lightweight-wrapper-for-keras-to-help-train-neural-networks-82851ba889c?gi=ea843ab1ae3c). This learning rate policy was proposed by Leslie Smith of the Naval Research Laboratory, and her work can be found [here](https://arxiv.org/pdf/1506.01186.pdf).
 
 <!-- TABLE OF CONTENTS -->
 <details open="open">
@@ -61,11 +59,10 @@ Training is carried out with ktrain's `autofit()` method, which implements a tri
         <li><a href="#7-simulating-a-model-managed-portfolio">7. Simulating a Model-Managed Portfolio</a></li>
       </ul>
     </li>
-    <li><a href="##project-structure">Project Structure</a></li>
+    <li><a href="#project-structure">Project Structure</a></li>
   </ol>
 </details>
 
-Once an appropriate learning rate has been determined, the learner can be trained with method `train_classifier()` of `FinancialNewsPredictor`. Here, the user has to specify the maximum number of epochs `epochs` to train as well as the number of epochs `early_stopping` after which to stop if no improvement in the validation loss has occurred. Before training, the user will be prompted to input the desired learning rate.
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
@@ -81,7 +78,6 @@ Nevertheless, sentiment can act as an intermediate factor between the news, and 
 
 This work has implemented a text classifier based on BERT, fine-tuned with a dataset of financial news, and trained in order to predict whether a stock's price will rise or fall. As opposed to FinBERT, sentiment is not taken into account. Instead, a set of criteria based on the price evolutions close to the release date of every news article have been applied, in order to label the dataset with which BERT is fine-tuned. Moreover, this work has been developed based on a much more extensive dataset than the one used for FinBERT, thus further capturing the uncertainties of the market. In consequence, it is possible to profitably manage a portfolio relying exclusively on this text classifier, without complementing it with other trading strategies, as many sentiment-based trading applications do.
 
-In case the training of a new model is necessary, after defining the required ktrain learner and model, this method goes on to aid the user in specifying a learning rate. At this point, the user has the option of allowing the application to iterate throughout several values of this parameter to obtain the loss-learning rate curve. Based on this curve, the user is expected to estimate an adequate value for this parameter. [Generally, the maximum learning rate associated with a decreasing loss with increasing learning rate is most adequate.](https://arxiv.org/pdf/1506.01186.pdf)
 
 <!-- GETTING STARTED -->
 ## Getting Started
@@ -251,20 +247,17 @@ Based on this simulation dynamic, the method's input arguments are the following
 * `only_validation`: boolean, If True, the simulation will only be done with financial news belonging to the validation set of the model obtained from `FinancialNewsClassifier`.
 * `start_date`: str representing a date, in the form YYYY-mm-dd, at which to start the simulation.
 * `end_date`: str representing a date, in the form YYYY-mm-dd, at which to end the simulation.
-* `interactive`: bool, If True, and if running in an iPython notebook environment, 
-        a slider for a date selection appears. This slider allows the user to view the news article of the dataset closest to 
-        such date, as well as the predictor's response to the news. Otherwise, a static plot of the portfolio's performance is shown.
 
-For example, in order to non-interactively simulate a portfolio made up of Apple, Microsoft, Amazon, and Tesla stocks, ranging from 2015 to 2020, starting with 1000 stocks of each, one has simply to run:
+For example, in order to simulate a portfolio made up of Apple, Microsoft, Amazon, and Tesla stocks, ranging from 2015 to 2020, starting with 1000 stocks of each, one has simply to run:
 
 ```
 f.simulate_portfolio(starting_amount=1000, 
                      start_date='2015-01-01', 
                      end_date='2020-01-01', 
-                     selection=['AAPL', 'MSFT', 'AMZN', 'TSLA'],
-                     interactive=False
+                     selection=['AAPL', 'MSFT', 'AMZN', 'TSLA']
                      )
 ```
+
 
 ## Project Structure
 
@@ -282,7 +275,6 @@ The application consists on the following scripts:
 
 Moreover, to demonstrate the functionalities of the application, as well as to give an example of how its steps are executed, a notebook [*Prediction_of_Stock_Market_Evolutions_with_Financial_News.ipynb*](https://github.com/altogi/StockPredictionsWithFinancialNews/blob/main/Prediction_of_Stock_Market_Evolutions_with_Financial_News.ipynb) is at the user's disposal.
 
-With regards to the preprocessing of the dataset, the method `text.texts_from_df()` from ktrain is used, and it is made sure that if previous preprocessings have been carried out for the same model and combination of parameters, it can be reloaded instead of recomputed. The preprocessing files will be stored in a folder specific to the current combination of `model`, `max_len`, `validation_size`, `batch_size`, and `split_type`. Similarly, in the case in which the model has already been trained and its corresponding predictor has been stored, it is loaded alongside its predictions (if already computed), and thus the definition of a ktrain model and learner for further training is avoided.
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
